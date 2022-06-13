@@ -201,12 +201,27 @@ clsf = train(xtr, ytr)
 
 # Display camera feed
 cap = cv2.VideoCapture(0)
-while(True):
+frameWidth = int(cap.get(3))
+frameHeight = int(cap.get(4))
+print(f"frame width: {frameWidth}, frame height: {frameHeight}")
+margin = 10
+borderWidth = 3
+font = cv2.FONT_HERSHEY_SIMPLEX
+fontScale = 1
+while True:
     #Capture each frame
-    ret, frame = cap.read()
+    _, frame = cap.read()
 
+    # Manipulate frame
     # gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     # cv2.imshow('frame', gray)
+    cv2.line(frame,(margin,margin),(frameWidth - margin,margin),(255,0,0),borderWidth)
+    cv2.line(frame,(margin,margin),(margin,frameHeight - margin),(255,0,0),borderWidth)
+    cv2.line(frame,(frameWidth - margin,margin),
+             (frameWidth - margin,frameHeight - margin),(255,0,0),borderWidth)
+    cv2.line(frame,(margin,frameHeight - margin),
+             (frameWidth - margin,frameHeight - margin),(255,0,0),borderWidth)
+    cv2.putText(frame,'Ahriman',(20,frameHeight - 20), font, fontScale,(255,255,255),2,cv2.LINE_AA)
 
     cv2.imshow('frame', frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
