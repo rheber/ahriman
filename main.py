@@ -18,6 +18,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
+import cv2
+
 # Dimensions of the output files.
 heightPx = 300
 widthPx = 200
@@ -192,4 +194,23 @@ pklData = joblib.load(pklname)
 # Train and test
 (xtr, xts, ytr, yts) = split(pklData)
 clsf = train(xtr, ytr)
-test(clsf, xts, yts)
+#test(clsf, xts, yts)
+
+# https://docs.opencv.org/4.x/dd/d43/tutorial_py_video_display.html
+# https://opencv24-python-tutorials.readthedocs.io/en/latest/py_tutorials/py_gui/py_video_display/py_video_display.html
+
+# Display camera feed
+cap = cv2.VideoCapture(0)
+while(True):
+    #Capture each frame
+    ret, frame = cap.read()
+
+    # gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    # cv2.imshow('frame', gray)
+
+    cv2.imshow('frame', frame)
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+cap.release()
+cv2.destroyAllWindows()

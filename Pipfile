@@ -8,6 +8,7 @@ scikit-learn = "*"
 joblib = "*"
 scikit-image = "*"
 matplotlib = "*"
+opencv-python = "*"
 
 [dev-packages]
 
