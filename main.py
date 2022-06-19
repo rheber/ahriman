@@ -219,7 +219,15 @@ cap = cv2.VideoCapture(0)
 frameWidth = int(cap.get(3))
 frameHeight = int(cap.get(4))
 print(f"frame width: {frameWidth}, frame height: {frameHeight}")
-cannyThreshold = 100
+
+defaultThreshold = 30
+cannyThreshold = defaultThreshold
+maxThreshold = 255
+def setThreshold(val):
+    """Callback to set the Canny threshold."""
+    global cannyThreshold
+    cannyThreshold = val
+
 while True:
     #Capture each frame
     _, frame = cap.read()
@@ -237,8 +245,11 @@ while True:
         approx = cv2.approxPolyDP(c, 0.02 * peri, True)
         cv2.drawContours(frame, [approx], -1, (0,255,0), 3)
 
-    drawBorder(frame, frameWidth, frameHeight)
-    cv2.imshow('frame', frame)
+    #drawBorder(frame, frameWidth, frameHeight)
+    mainWindow = 'mainWindow'
+    cv2.namedWindow(mainWindow)
+    cv2.createTrackbar('Canny Thresh:', mainWindow, cannyThreshold, maxThreshold, setThreshold)
+    cv2.imshow(mainWindow, frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
