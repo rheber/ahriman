@@ -208,12 +208,25 @@ margin = 10
 borderWidth = 3
 font = cv2.FONT_HERSHEY_SIMPLEX
 fontScale = 1
+cannyThreshold = 100
 while True:
     #Capture each frame
     _, frame = cap.read()
 
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    edges = cv2.Canny(gray, cannyThreshold, cannyThreshold * 2)
+
+    # https://stackoverflow.com/questions/37942132/opencv-detect-quadrilateral-in-python
+    (cnts, _) = cv2.findContours(edges.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    cnts=sorted(cnts, key = cv2.contourArea, reverse = True)[:10]
+    # loop over our contours
+    for c in cnts:
+        peri = cv2.arcLength(c, True)
+        approx = cv2.approxPolyDP(c, 0.02 * peri, True)
+        if len(approx) == 4:
+            cv2.drawContours(frame, [approx], -1, (0,255,0), 3)
+
     # Manipulate frame
-    # gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     # cv2.imshow('frame', gray)
     cv2.line(frame,(margin,margin),(frameWidth - margin,margin),(255,0,0),borderWidth)
     cv2.line(frame,(margin,margin),(margin,frameHeight - margin),(255,0,0),borderWidth)
