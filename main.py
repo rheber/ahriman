@@ -5,6 +5,7 @@ Main file.
 Much of this is based on https://kapernikov.com/tutorial-image-classification-with-scikit-learn/
 """
 
+import os
 import joblib
 from skimage.color import rgba2rgb, rgb2gray
 from skimage.feature import hog
@@ -16,8 +17,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, Normalizer
 import numpy as np
 import matplotlib.pyplot as plt
-import os
-
 import cv2
 
 # Dimensions of the output files.
@@ -49,10 +48,10 @@ def normalizeImages(srcDirs, includeFunc):
     for folderPath in srcDirs: # For each class
         for filePath in os.listdir(folderPath): # For each instance
             if includeFunc(filePath): # If we should include the instance
-                fullPath = os.path.join(folderPath, filePath)
+                _fullPath = os.path.join(folderPath, filePath)
                 #print(fullPath)
                 im = imgRead(os.path.join(folderPath, filePath))
-                if (im.shape[2] == 4):
+                if im.shape[2] == 4:
                     #print("removing alpha")
                     im = rgba2rgb(im)
                 im = imgResize(im, (widthPx, heightPx))
@@ -95,14 +94,14 @@ class RGB2GrayTransformer(BaseEstimator, TransformerMixin):
     """
     Convert an array of RGB images to grayscale
     """
- 
+
     def __init__(self):
         pass
- 
-    def fit(self, X, y=None):
+
+    def fit(self, _X, _y=None):
         """returns itself"""
         return self
- 
+
     def transform(self, X, y=None):
         """perform the transformation and return an array"""
         return np.array([rgb2gray(img) for img in X])
@@ -112,7 +111,7 @@ class HogTransformer(BaseEstimator, TransformerMixin):
     Expects an array of 2d arrays (1 channel images)
     Calculates hog features for each img
     """
- 
+
     def __init__(self, y=None, orientations=9,
                  pixels_per_cell=(8, 8),
                  cells_per_block=(3, 3), block_norm='L2-Hys'):
@@ -121,10 +120,10 @@ class HogTransformer(BaseEstimator, TransformerMixin):
         self.pixels_per_cell = pixels_per_cell
         self.cells_per_block = cells_per_block
         self.block_norm = block_norm
- 
+
     def fit(self, X, y=None):
         return self
- 
+
     def transform(self, X, y=None):
         def local_hog(X):
             return hog(X,
@@ -132,7 +131,7 @@ class HogTransformer(BaseEstimator, TransformerMixin):
                        pixels_per_cell=self.pixels_per_cell,
                        cells_per_block=self.cells_per_block,
                        block_norm=self.block_norm)
- 
+
         try: # parallel
             return np.array([local_hog(img) for img in X])
         except:
@@ -154,9 +153,9 @@ def split(data):
 
 grayify = RGB2GrayTransformer()
 hogify = HogTransformer(
-    pixels_per_cell=(14, 14), 
-    cells_per_block=(2,2), 
-    orientations=9, 
+    pixels_per_cell=(14, 14),
+    cells_per_block=(2,2),
+    orientations=9,
     block_norm='L2-Hys'
 )
 scalify = StandardScaler()
@@ -199,20 +198,33 @@ clsf = train(xtr, ytr)
 # https://docs.opencv.org/4.x/dd/d43/tutorial_py_video_display.html
 # https://opencv24-python-tutorials.readthedocs.io/en/latest/py_tutorials/py_gui/py_video_display/py_video_display.html
 
+def drawBorder(image, imageWidth, imageHeight):
+    """Draw a border and title onto the given image."""
+    margin = 10
+    borderWidth = 3
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    fontScale = 1
+
+    cv2.line(image,(margin,margin),(imageWidth - margin,margin),(255,0,0),borderWidth)
+    cv2.line(image,(margin,margin),(margin,imageHeight - margin),(255,0,0),borderWidth)
+    cv2.line(image,(imageWidth - margin,margin),
+             (imageWidth - margin,imageHeight - margin),(255,0,0),borderWidth)
+    cv2.line(image,(margin,imageHeight - margin),
+             (imageWidth - margin,imageHeight - margin),(255,0,0),borderWidth)
+    cv2.putText(image,'Ahriman',(20,imageHeight - 20), font, fontScale,(255,255,255),2,cv2.LINE_AA)
+
+
 # Display camera feed
 cap = cv2.VideoCapture(0)
 frameWidth = int(cap.get(3))
 frameHeight = int(cap.get(4))
 print(f"frame width: {frameWidth}, frame height: {frameHeight}")
-margin = 10
-borderWidth = 3
-font = cv2.FONT_HERSHEY_SIMPLEX
-fontScale = 1
 cannyThreshold = 100
 while True:
     #Capture each frame
     _, frame = cap.read()
 
+    # https://docs.opencv.org/3.4/df/d0d/tutorial_find_contours.html
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     edges = cv2.Canny(gray, cannyThreshold, cannyThreshold * 2)
 
@@ -223,19 +235,9 @@ while True:
     for c in cnts:
         peri = cv2.arcLength(c, True)
         approx = cv2.approxPolyDP(c, 0.02 * peri, True)
-        if len(approx) == 4:
-            cv2.drawContours(frame, [approx], -1, (0,255,0), 3)
+        cv2.drawContours(frame, [approx], -1, (0,255,0), 3)
 
-    # Manipulate frame
-    # cv2.imshow('frame', gray)
-    cv2.line(frame,(margin,margin),(frameWidth - margin,margin),(255,0,0),borderWidth)
-    cv2.line(frame,(margin,margin),(margin,frameHeight - margin),(255,0,0),borderWidth)
-    cv2.line(frame,(frameWidth - margin,margin),
-             (frameWidth - margin,frameHeight - margin),(255,0,0),borderWidth)
-    cv2.line(frame,(margin,frameHeight - margin),
-             (frameWidth - margin,frameHeight - margin),(255,0,0),borderWidth)
-    cv2.putText(frame,'Ahriman',(20,frameHeight - 20), font, fontScale,(255,255,255),2,cv2.LINE_AA)
-
+    drawBorder(frame, frameWidth, frameHeight)
     cv2.imshow('frame', frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
