@@ -228,13 +228,22 @@ def setThreshold(val):
     global cannyThreshold
     cannyThreshold = val
 
+defaultBlur = 5
+blur = defaultBlur
+maxBlur = 100
+def setBlur(val):
+    """Callback to set the blur."""
+    global blur
+    blur = max(val, 1)
+
 while True:
     #Capture each frame
     _, frame = cap.read()
 
     # https://docs.opencv.org/3.4/df/d0d/tutorial_find_contours.html
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    edges = cv2.Canny(gray, cannyThreshold, cannyThreshold * 2)
+    blurred = cv2.blur(gray, (blur, blur))
+    edges = cv2.Canny(blurred, cannyThreshold, cannyThreshold * 2)
 
     # https://stackoverflow.com/questions/37942132/opencv-detect-quadrilateral-in-python
     (cnts, _) = cv2.findContours(edges.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
@@ -248,7 +257,8 @@ while True:
     #drawBorder(frame, frameWidth, frameHeight)
     mainWindow = 'mainWindow'
     cv2.namedWindow(mainWindow)
-    cv2.createTrackbar('Canny Thresh:', mainWindow, cannyThreshold, maxThreshold, setThreshold)
+    #cv2.createTrackbar('Canny Thresh:', mainWindow, cannyThreshold, maxThreshold, setThreshold)
+    #cv2.createTrackbar('Blur:', mainWindow, blur, maxBlur, setBlur)
     cv2.imshow(mainWindow, frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
